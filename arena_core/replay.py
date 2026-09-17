@@ -41,7 +41,10 @@ def build_replay(managed: Any) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "schema_version": 1,
         "mode": game.mode.value,
-        "seed": game.seed,
+        # Seed is a 63-bit integer and cannot survive a JSON round-trip through
+        # JavaScript (IEEE 754 doubles are exact only up to 2**53 - 1), so it is
+        # serialized as a string to keep the browser-encrypted replay hash stable.
+        "seed": str(game.seed),
         "source_count": game.source_count,
         "actions": [_event_action(event) for event in game.events],
         "result": {

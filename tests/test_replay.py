@@ -42,3 +42,15 @@ def test_replay_does_not_include_hidden_source_truth(tmp_path):
     assert "sources" not in replay
     assert "truth" not in replay
     assert "direction_deg" not in str(replay)
+
+
+def test_replay_serializes_large_seed_as_string_for_js_round_trip(tmp_path):
+    # 63-bit seeds exceed 2**53 - 1, so a browser JSON.parse would round them.
+    managed = SessionStore(tmp_path).create(
+        mode=GameMode.OMNIDIRECTIONAL, seed=7252035660260799000
+    )
+    replay = build_replay(managed)
+
+    assert isinstance(replay["seed"], str)
+    assert replay["seed"] == "7252035660260799000"
+    verify_replay(replay)

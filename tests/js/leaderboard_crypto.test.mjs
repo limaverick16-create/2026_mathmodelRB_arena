@@ -67,6 +67,28 @@ test("browser-compatible encryption round trips through trusted decryptor", asyn
 });
 
 
+test("63-bit seed survives the browser JSON round-trip", async () => {
+  const {publicKey, privateKey} = keys();
+  const bigSeedReplay = {
+    schema_version: 1,
+    mode: "omnidirectional",
+    seed: "7252035660260799000",  // 63-bit seed, serialized as a string
+    source_count: 11,
+    actions: [{type: "measure", channel: 1}],
+    result: {virtual_time_s: 5.0},
+  };
+  // 模拟浏览器收到的 JSON 被 JSON.parse 后再 JSON.stringify 的往返。
+  const roundTripped = JSON.parse(JSON.stringify(bigSeedReplay));
+  const submission = await encryptSubmission({
+    summary,
+    replay: roundTripped,
+    keyId: "arena-test-01",
+    publicKeyJwk: await publicJwkFromPem(publicKey),
+  });
+  assert.equal(decryptSubmission(submission, privateKey).seed, "7252035660260799000");
+});
+
+
 test("summary or ciphertext tampering cannot be decrypted", async () => {
   const {publicKey, privateKey} = keys();
   const submission = await encryptSubmission({
@@ -81,8 +103,12 @@ test("summary or ciphertext tampering cannot be decrypted", async () => {
   assert.throws(() => decryptSubmission(changedSummary, privateKey));
 
   const changedCiphertext = structuredClone(submission);
-  const last = changedCiphertext.encrypted_replay.ciphertext.at(-1);
+  // 翻转中间字符，避免命中 base64url 去 padding 后的填充位（末字符低位可能不影响解码）。
+  const ciphertext = changedCiphertext.encrypted_replay.ciphertext;
+  const index = Math.floor(ciphertext.length / 2);
   changedCiphertext.encrypted_replay.ciphertext =
-    changedCiphertext.encrypted_replay.ciphertext.slice(0, -1) + (last === "A" ? "B" : "A");
+    ciphertext.slice(0, index) +
+    (ciphertext[index] === "A" ? "B" : "A") +
+    ciphertext.slice(index + 1);
   assert.throws(() => decryptSubmission(changedCiphertext, privateKey));
 });
