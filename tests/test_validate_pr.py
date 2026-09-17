@@ -109,51 +109,6 @@ def test_validate_candidate_replays_decrypted_payload(tmp_path, monkeypatch):
     ) == submission["submission_id"]
 
 
-def test_validate_candidate_rejects_duplicate_category(tmp_path, monkeypatch):
-    prepared = prepare_submission(
-        complete_session(tmp_path), login="alice", nickname="Player"
-    )
-    submission = encrypted_stub(prepared["summary"])
-    directory = account_hash("alice")
-    submissions_dir = tmp_path / "submissions" / directory
-    submissions_dir.mkdir(parents=True)
-
-    existing = encrypted_stub(prepared["summary"])
-    (submissions_dir / "00000000000000000000.json").write_text(
-        json.dumps(existing), encoding="utf-8"
-    )
-
-    new_path = submissions_dir / f"{submission['submission_id']}.json"
-    new_path.write_text(json.dumps(submission), encoding="utf-8")
-    relative = f"submissions/{directory}/{submission['submission_id']}.json"
-
-    config = tmp_path / "config.json"
-    config.write_text(
-        json.dumps({"encryption_key_id": "arena-test-01"}), encoding="utf-8"
-    )
-    monkeypatch.setattr(
-        validate_pr,
-        "changed_submission",
-        lambda candidate, base, head: (relative, new_path),
-    )
-    monkeypatch.setattr(
-        validate_pr,
-        "decrypt_replay",
-        lambda _path, output: output.write_text(
-            json.dumps(prepared["replay"]), encoding="utf-8"
-        ),
-    )
-
-    with pytest.raises(SubmissionError, match="already has a score"):
-        validate_pr.validate_candidate(
-            candidate=tmp_path,
-            base="base",
-            head="head",
-            author="alice",
-            config_path=config,
-        )
-
-
 def test_validate_candidate_rejects_author_path_mismatch(tmp_path, monkeypatch):
     prepared = prepare_submission(
         complete_session(tmp_path), login="alice", nickname="Player"

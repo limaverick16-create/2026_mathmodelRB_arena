@@ -73,23 +73,6 @@ def decrypt_replay(path: Path, output: Path) -> None:
     )
 
 
-def _reject_duplicate_category(
-    candidate: Path, directory: str, new_submission_id: str, category: str
-) -> None:
-    existing_dir = candidate / "submissions" / directory
-    if not existing_dir.is_dir():
-        return
-    for path in existing_dir.glob("*.json"):
-        if path.name == f"{new_submission_id}.json":
-            continue
-        try:
-            existing = json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as error:
-            raise SubmissionError(f"cannot read existing submission {path.name}") from error
-        if existing.get("summary", {}).get("category") == category:
-            raise SubmissionError("this account already has a score in this category")
-
-
 def validate_candidate(
     *, candidate: Path, base: str, head: str, author: str, config_path: Path
 ) -> str:
@@ -102,12 +85,6 @@ def validate_candidate(
     expected_directory = account_hash(author)
     if relative != f"submissions/{expected_directory}/{submission['submission_id']}.json":
         raise SubmissionError("submission path does not match its author and id")
-    _reject_duplicate_category(
-        candidate,
-        expected_directory,
-        submission["submission_id"],
-        submission["summary"]["category"],
-    )
     with tempfile.TemporaryDirectory(prefix="arena-verify-") as temporary:
         replay_path = Path(temporary) / "replay.json"
         try:
