@@ -1,0 +1,41 @@
+name: Publish leaderboard
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "submissions/**/*.json"
+      - "arena_core/**"
+      - "arena_leaderboard/**"
+      - "leaderboard/config.json"
+      - ".github/workflows/publish-leaderboard.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - name: Validate and build
+        run: |
+          python -m arena_leaderboard.validate_path submissions
+          python -m arena_leaderboard.build --submissions submissions --output leaderboard/generated/index.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: leaderboard/generated
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,15 @@
+[project]
+name = "b-problem-arena"
+version = "1.0.0"
+description = "Local interactive arena for the 2026 mathematical modeling B problem"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["arena_core", "arena_server", "arena_sdk", "arena_leaderboard"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true

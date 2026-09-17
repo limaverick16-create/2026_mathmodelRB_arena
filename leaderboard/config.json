@@ -1,0 +1,18 @@
+{
+  "owner": "limaverick16-create",
+  "repo": "2026_mathmodelRB_arena",
+  "default_branch": "main",
+  "oauth_client_id": "Ov23lizjlsYDeWyGuP2a",
+  "leaderboard_url": "https://limaverick16-create.github.io/2026_mathmodelRB_arena/",
+  "encryption_key_id": "arena-b3901e83e3cb81f1",
+  "encryption_public_key_jwk": {
+    "kty": "RSA",
+    "n": "pxAnQIOf-UR9OwC_uj-6T7NKEMbnBKOYnrwkXluE2-EKWC0rXENx-Eo4IMJK9h0getFy83uWoUybilcTkdM_R2vyGxhsKZvHFSGKnNSs_VC5yFCSLbptHMxXvJgzS-gs6TK8ark9HKTRj_GddlMZ3gbg7MGWDNuw09ioLU4zfxdpwZCl2Fowj_lJ3PAmdv83QpDXImnCn5833xVFQAJODJxtZwFtFsQRQEvUOsy01lHaM8kDG2JLUHxV-bHQs3yAShTj2S-ngAZ-qPzTg3Yv-EKJF1epxcxsNSNHk1b6-M6GubBZ2HNvc7YTSs1G7Xs55vc26BgZh9qjMcXvtxp3qN8MCrYD711QTeLAQggWw6pRKZIXLiI64Uxs5xEkrdlG7eEk0vtOKHQhDU4hRyX1f5AFzmqAiavNRq-gtT-0d9icYeHh9rbdGGmMoD2Gf15nRXTYxEDG2aKjC_nF3DRFjklG0_WW4CZ2ldSfn0xan2Xh1lVPJ-6c59cPaJitQBDz",
+    "e": "AQAB",
+    "alg": "RSA-OAEP-256",
+    "key_ops": [
+      "encrypt"
+    ],
+    "ext": true
+  }
+}

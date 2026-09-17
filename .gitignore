@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+data/sessions/
+data/submissions/
+leaderboard/generated/
+strategies/local_*.py
+.DS_Store

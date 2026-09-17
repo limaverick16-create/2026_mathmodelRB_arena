@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>B题机器狗竞技场</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main>
+    <section id="home">
+      <p class="eyebrow">2026 数学建模 · B题</p>
+      <h1>B题机器狗竞技场</h1>
+      <p class="lead">你来决定机器狗的每一步，也可以接入 Python 策略观看它如何行动。</p>
+      <div class="mode-grid">
+        <button data-mode="showcase"><strong>功能展示</strong><span>公开真值，理解规则</span></button>
+        <button data-mode="omnidirectional"><strong>非定向源</strong><span>正式人工挑战</span></button>
+        <button data-mode="mixed_directional"><strong>有定向源</strong><span>定向与非定向混合</span></button>
+        <button id="strategy-entry"><strong>策略实验室</strong><span>运行并观察 Python 策略</span></button>
+      </div>
+      <div id="strategy-setup" class="strategy-setup" hidden>
+        <label>地图模式
+          <select id="strategy-mode">
+            <option value="omnidirectional">非定向源</option>
+            <option value="mixed_directional">有定向源</option>
+          </select>
+        </label>
+        <label>Python 策略 <select id="strategy-select"></select></label>
+        <button id="strategy-refresh">刷新策略列表</button>
+        <button id="strategy-start">开始观察</button>
+        <p>把 <code>template.py</code> 复制到 <code>strategies/</code> 并改名，刷新列表即可加载，无需重启或刷新网页。</p>
+      </div>
+      <section class="home-leaderboards" aria-labelledby="home-leaderboards-title">
+        <header>
+          <div>
+            <h2 id="home-leaderboards-title">排行榜</h2>
+            <p id="home-leaderboards-status">正在读取最新成绩…</p>
+          </div>
+          <a id="home-leaderboards-link" target="_blank" rel="noreferrer" hidden>打开完整排行榜</a>
+        </header>
+        <div class="home-leaderboards-grid">
+          <article class="home-board">
+            <h3>人工排行榜</h3>
+            <div class="home-board-tabs" role="tablist" aria-label="人工排行榜地图模式">
+              <button role="tab" aria-selected="true" data-board-tab="human_omnidirectional">非定向源</button>
+              <button role="tab" aria-selected="false" data-board-tab="human_mixed_directional">有定向源</button>
+            </div>
+            <div class="home-board-scroll" data-board-panel="human_omnidirectional">
+              <table><thead><tr><th>#</th><th>玩家</th><th>秒/源</th><th>地图</th></tr></thead><tbody id="home-board-human-omnidirectional"></tbody></table>
+            </div>
+            <div class="home-board-scroll" data-board-panel="human_mixed_directional" hidden>
+              <table><thead><tr><th>#</th><th>玩家</th><th>秒/源</th><th>地图</th></tr></thead><tbody id="home-board-human-mixed-directional"></tbody></table>
+            </div>
+          </article>
+          <article class="home-board">
+            <h3>策略排行榜</h3>
+            <div class="home-board-tabs" role="tablist" aria-label="策略排行榜地图模式">
+              <button role="tab" aria-selected="true" data-board-tab="strategy_omnidirectional">非定向源</button>
+              <button role="tab" aria-selected="false" data-board-tab="strategy_mixed_directional">有定向源</button>
+            </div>
+            <div class="home-board-scroll" data-board-panel="strategy_omnidirectional">
+              <table><thead><tr><th>#</th><th>用户 / 策略</th><th>秒/源</th><th>地图</th></tr></thead><tbody id="home-board-strategy-omnidirectional"></tbody></table>
+            </div>
+            <div class="home-board-scroll" data-board-panel="strategy_mixed_directional" hidden>
+              <table><thead><tr><th>#</th><th>用户 / 策略</th><th>秒/源</th><th>地图</th></tr></thead><tbody id="home-board-strategy-mixed-directional"></tbody></table>
+            </div>
+          </article>
+        </div>
+      </section>
+    </section>
+    <section id="game" hidden>
+      <header class="game-header">
+        <button id="back">← 返回</button>
+        <div id="mode-name"></div>
+        <div><b id="virtual-time">虚拟 0.0 s</b><span id="player-time">玩家 0.0 s</span></div>
+      </header>
+      <div class="game-grid">
+        <div class="map-column">
+          <div class="map-tools" aria-label="地图缩放">
+            <button id="map-zoom-in" title="以待移动坐标为中心放大">＋ 放大</button>
+            <button id="map-zoom-out" title="以待移动坐标为中心缩小">－ 缩小</button>
+            <button id="map-zoom-reset">重置</button>
+            <span id="map-zoom-level">1×</span>
+          </div>
+          <svg id="map" viewBox="-2200 -2200 4400 4400" aria-label="游戏地图"></svg>
+          <div class="move-bar">
+            <label>X <input id="target-x" type="number" step="1" value="0"></label>
+            <label>Y <input id="target-y" type="number" step="1" value="0"></label>
+            <button id="move">移动</button>
+            <span id="move-preview"></span>
+          </div>
+          <div id="log" class="log"></div>
+        </div>
+        <aside>
+          <div class="status-line"><span id="clear-count">已清除 0</span><span id="assist-status">无辅助</span></div>
+          <div class="toolbar">
+            <button id="pause">暂停</button><button id="undo">撤销</button>
+          </div>
+          <div id="strategy-controls" class="strategy-controls" hidden>
+            <strong>策略控制台</strong>
+            <div>
+              <select id="strategy-live-select"></select>
+              <button id="strategy-live-refresh">刷新</button>
+              <button id="strategy-switch">切换</button>
+            </div>
+            <div>
+              <button id="strategy-step">单步</button>
+              <button id="strategy-run">连续运行</button>
+              <button id="strategy-stop">停止策略</button>
+              <label>速度
+                <select id="strategy-speed">
+                  <option value="1000">1×</option>
+                  <option value="350" selected>3×</option>
+                  <option value="100">10×</option>
+                  <option value="20">最快</option>
+                </select>
+              </label>
+            </div>
+            <span id="strategy-status"></span>
+          </div>
+          <h2>频道图层</h2>
+          <p class="hint">勾选频道即可查看对应信息；有信号显示可能区域，没信号显示排除区域。所选频道也用于批量检测。</p>
+          <div class="channel-tools">
+            <button id="channels-all">频道全选</button><button id="channels-none">清空选择</button>
+          </div>
+          <div id="channels" class="channels"></div>
+          <div class="actions">
+            <label>操作频道 <select id="action-channel"></select></label>
+            <button id="measure">检测</button><button id="clear">清除</button>
+          </div>
+          <div class="batch">
+            <button id="batch-start">批量检测</button><button id="batch-cancel" disabled>取消剩余</button>
+            <div id="batch-summary"></div>
+          </div>
+          <details>
+            <summary>获取辅助信息</summary>
+            <button id="intel-total">显示源总数</button>
+            <button id="intel-exists">查询所选频道</button>
+            <button id="intel-position">显示所选源位置</button>
+            <div id="intel-results"></div>
+          </details>
+          <button id="export-replay" class="wide">导出本局回放 JSON</button>
+          <div class="leaderboard-box">
+            <strong>排行榜</strong>
+            <p id="leaderboard-eligibility">完整无辅助通关后可提交</p>
+            <label>公开昵称
+              <input id="leaderboard-nickname" maxlength="24" autocomplete="nickname" placeholder="例如：小明">
+            </label>
+            <label id="leaderboard-strategy-label" hidden>公开策略名
+              <input id="leaderboard-strategy-name" maxlength="32" placeholder="留空则显示“匿名策略”">
+            </label>
+            <p class="privacy-note">排行榜只公开成绩摘要；回放会在本机加密后上传。</p>
+            <button id="leaderboard-submit" class="wide" disabled>上传本局进入排行榜</button>
+            <p id="leaderboard-stage" role="status"></p>
+            <div id="github-auth" hidden>
+              <p>请在 GitHub 输入代码：<b id="github-code"></b></p>
+              <a id="github-link" target="_blank" rel="noreferrer">打开 GitHub 授权页</a>
+            </div>
+            <a id="pull-request-link" target="_blank" rel="noreferrer" hidden>查看成绩 Pull Request</a>
+          </div>
+        </aside>
+      </div>
+      <section id="completion-dialog" class="completion-dialog" role="dialog" aria-modal="true" aria-labelledby="completion-title" hidden>
+        <div class="completion-card">
+          <h2 id="completion-title">本局完成</h2>
+          <p id="completion-summary" class="completion-summary"></p>
+          <dl class="completion-results">
+            <div><dt>操作者</dt><dd id="result-actor"></dd></div>
+            <div><dt>地图模式</dt><dd id="result-mode"></dd></div>
+            <div><dt>源总数</dt><dd id="result-source-count"></dd></div>
+            <div id="result-source-types-row"><dt>源类型</dt><dd id="result-source-types"></dd></div>
+            <div><dt>清除数量</dt><dd id="result-cleared-count"></dd></div>
+            <div><dt>总虚拟时间</dt><dd id="result-virtual-time"></dd></div>
+            <div><dt>平均耗时</dt><dd id="result-average-time"></dd></div>
+            <div><dt>移动距离</dt><dd id="result-distance"></dd></div>
+            <div><dt>辅助状态</dt><dd id="result-assistance"></dd></div>
+            <div><dt>排行榜</dt><dd id="result-leaderboard"></dd></div>
+          </dl>
+          <div class="completion-actions">
+            <button id="completion-close">关闭结果</button>
+            <button id="completion-home">返回首页</button>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+  <div id="toast" role="status"></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
