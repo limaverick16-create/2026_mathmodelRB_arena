@@ -37,7 +37,7 @@ async function sha256Hex(value) {
 }
 
 
-export async function encryptSubmission({summary, replay, keyId, publicKeyJwk}) {
+export async function encryptSubmission({summary, replay, replayCanonical, keyId, publicKeyJwk}) {
   if (!globalThis.crypto?.subtle) throw new Error("当前浏览器不支持安全加密上传");
   const publicKey = await crypto.subtle.importKey(
     "jwk",
@@ -51,10 +51,13 @@ export async function encryptSubmission({summary, replay, keyId, publicKeyJwk}) 
   );
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const additionalData = textEncoder.encode(canonicalJson(summary));
+  // 回放必须用服务端给出的规范字符串原样加密，避免浏览器 JSON.stringify
+  // 把整数坐标 100.0 重新序列化成 100，破坏回放哈希。
+  const replayPlaintext = replayCanonical ?? canonicalJson(replay);
   const ciphertext = new Uint8Array(await crypto.subtle.encrypt(
     {name: "AES-GCM", iv, additionalData, tagLength: 128},
     aesKey,
-    textEncoder.encode(canonicalJson(replay)),
+    textEncoder.encode(replayPlaintext),
   ));
   const rawKey = new Uint8Array(await crypto.subtle.exportKey("raw", aesKey));
   const wrappedKey = new Uint8Array(await crypto.subtle.encrypt(

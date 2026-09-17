@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from arena_core.replay import canonical_replay_json
 from arena_leaderboard.github_auth import DeviceFlow, GitHubAuthError, TokenStore
 from arena_leaderboard.schema_v2 import (
     SubmissionError,
@@ -103,6 +104,7 @@ class LeaderboardService:
                 "status": "ready",
                 "summary": package["summary"],
                 "replay": package["replay"],
+                "replay_canonical": canonical_replay_json(package["replay"]),
                 "key_id": self.config.encryption_key_id,
                 "public_key_jwk": self.config.encryption_public_key_jwk,
             }

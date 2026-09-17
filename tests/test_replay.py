@@ -3,7 +3,12 @@ import copy
 import pytest
 
 from arena_core import GameMode
-from arena_core.replay import ReplayError, build_replay, verify_replay
+from arena_core.replay import (
+    ReplayError,
+    build_replay,
+    canonical_replay_json,
+    verify_replay,
+)
 from arena_server.sessions import SessionStore
 
 
@@ -54,3 +59,14 @@ def test_replay_serializes_large_seed_as_string_for_js_round_trip(tmp_path):
     assert isinstance(replay["seed"], str)
     assert replay["seed"] == "7252035660260799000"
     verify_replay(replay)
+
+
+def test_canonical_replay_json_preserves_whole_number_float_coordinates(tmp_path):
+    # JS JSON.stringify 会把 100.0 写成 100，破坏回放哈希；规范字符串必须保留 .0。
+    managed = SessionStore(tmp_path).create(mode=GameMode.OMNIDIRECTIONAL, seed=7)
+    managed.apply_action({"type": "move", "x": 100, "y": 200})
+    replay = build_replay(managed)
+
+    raw = canonical_replay_json(replay)
+
+    assert '"x":100.0,"y":200.0' in raw

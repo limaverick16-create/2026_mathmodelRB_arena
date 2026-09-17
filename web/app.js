@@ -403,6 +403,7 @@ async function submitLeaderboard() {
     const submission = await encryptSubmission({
       summary: prepared.summary,
       replay: prepared.replay,
+      replayCanonical: prepared.replay_canonical,
       keyId: prepared.key_id,
       publicKeyJwk: prepared.public_key_jwk,
     });

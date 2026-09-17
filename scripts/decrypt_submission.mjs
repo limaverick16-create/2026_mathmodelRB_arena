@@ -11,7 +11,7 @@ import {pathToFileURL} from "node:url";
 import {canonicalJson} from "../web/leaderboard-crypto.mjs";
 
 
-export function decryptSubmission(submission, privateKeyPem) {
+export function decryptSubmissionRaw(submission, privateKeyPem) {
   if (submission?.encrypted_replay?.algorithm !== "RSA-OAEP-3072+A256GCM") {
     throw new Error("unsupported encryption algorithm");
   }
@@ -34,7 +34,12 @@ export function decryptSubmission(submission, privateKeyPem) {
   decipher.setAAD(Buffer.from(canonicalJson(submission.summary), "utf8"));
   decipher.setAuthTag(authTag);
   const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
-  return JSON.parse(plaintext.toString("utf8"));
+  return plaintext.toString("utf8");
+}
+
+
+export function decryptSubmission(submission, privateKeyPem) {
+  return JSON.parse(decryptSubmissionRaw(submission, privateKeyPem));
 }
 
 
@@ -51,8 +56,10 @@ function main() {
   const privateKey = process.env.LEADERBOARD_PRIVATE_KEY_PEM;
   if (!privateKey) throw new Error("leaderboard private key is not configured");
   const submission = JSON.parse(readFileSync(input, "utf8"));
-  const replay = decryptSubmission(submission, privateKey);
-  writeFileSync(output, `${canonicalJson(replay)}\n`, {encoding: "utf8", mode: 0o600});
+  // 原样写出解密后的明文，不经过 JSON.parse/stringify，避免整数坐标 100.0 被
+  // 改写为 100 而破坏回放哈希。
+  const plaintext = decryptSubmissionRaw(submission, privateKey);
+  writeFileSync(output, `${plaintext}\n`, {encoding: "utf8", mode: 0o600});
   chmodSync(output, 0o600);
 }
 

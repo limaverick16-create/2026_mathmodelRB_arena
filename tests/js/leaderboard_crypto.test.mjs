@@ -6,7 +6,7 @@ import {
   canonicalJson,
   encryptSubmission,
 } from "../../web/leaderboard-crypto.mjs";
-import {decryptSubmission} from "../../scripts/decrypt_submission.mjs";
+import {decryptSubmission, decryptSubmissionRaw} from "../../scripts/decrypt_submission.mjs";
 
 
 function keys() {
@@ -86,6 +86,21 @@ test("63-bit seed survives the browser JSON round-trip", async () => {
     publicKeyJwk: await publicJwkFromPem(publicKey),
   });
   assert.equal(decryptSubmission(submission, privateKey).seed, "7252035660260799000");
+});
+
+
+test("decryptSubmissionRaw preserves whole-number floats verbatim", async () => {
+  const {publicKey, privateKey} = keys();
+  const replayCanonical = '{"actions":[{"type":"move","x":100.0,"y":200.0}],"mode":"omnidirectional","schema_version":1}';
+  const submission = await encryptSubmission({
+    summary,
+    replay: null,
+    replayCanonical,
+    keyId: "arena-test-01",
+    publicKeyJwk: await publicJwkFromPem(publicKey),
+  });
+
+  assert.equal(decryptSubmissionRaw(submission, privateKey), replayCanonical);
 });
 
 

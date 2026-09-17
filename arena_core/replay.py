@@ -34,6 +34,17 @@ def _event_action(event: dict[str, Any]) -> dict[str, Any]:
     raise ReplayError(f"unsupported replay event: {action_type}")
 
 
+def canonical_replay_json(replay: dict[str, Any]) -> str:
+    """Return the canonical JSON string a browser must encrypt verbatim.
+
+    JavaScript's JSON.stringify and Python's json.dumps format whole-number
+    floats differently ("100" vs "100.0"), so the browser must never re-serialize
+    the replay itself. The server hands over this exact string, and the browser
+    encrypts these bytes unchanged.
+    """
+    return _canonical(replay).decode("utf-8")
+
+
 def build_replay(managed: Any) -> dict[str, Any]:
     """Build a replay without embedding source coordinates or directions."""
 
