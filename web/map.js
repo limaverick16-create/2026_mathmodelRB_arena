@@ -22,12 +22,17 @@ export function renderMap(svg,state,visible,target,selectedChannel=null){
   if(points.length)svg.append(element("polyline",{points:[`0,0`,...points].join(" "),class:"route"}));
   state.channels.filter(item=>visible.has(item.channel)&&item.status!=="cleared").forEach(item=>{
     const color=colorFor(item.channel);
-    item.layer.possible_polygons.forEach(polygon=>svg.append(element("polygon",{points:polygon.map(([x,y])=>`${x},${-y}`).join(" "),class:"possible",fill:color,stroke:color})));
-    item.layer.excluded_disks.forEach(disk=>svg.append(element("circle",{cx:disk.x,cy:-disk.y,r:disk.radius,class:"excluded"})));
-    item.layer.negative_observations.forEach(point=>{
-      svg.append(element("line",{x1:point.x-25,y1:-point.y-25,x2:point.x+25,y2:-point.y+25,class:"negative"}));
-      svg.append(element("line",{x1:point.x-25,y1:-point.y+25,x2:point.x+25,y2:-point.y-25,class:"negative"}));
-    });
+    if(item.status==="detected"){
+      // 有信号：只显示可能的区域，不再叠加排除盘/无信号标记
+      item.layer.possible_polygons.forEach(polygon=>svg.append(element("polygon",{points:polygon.map(([x,y])=>`${x},${-y}`).join(" "),class:"possible",fill:color,stroke:color})));
+    }else{
+      // 无信号（或尚未检测）：只显示排除区域
+      item.layer.excluded_disks.forEach(disk=>svg.append(element("circle",{cx:disk.x,cy:-disk.y,r:disk.radius,class:"excluded"})));
+      item.layer.negative_observations.forEach(point=>{
+        svg.append(element("line",{x1:point.x-25,y1:-point.y-25,x2:point.x+25,y2:-point.y+25,class:"negative"}));
+        svg.append(element("line",{x1:point.x-25,y1:-point.y+25,x2:point.x+25,y2:-point.y-25,class:"negative"}));
+      });
+    }
   });
   (state.truth||[]).forEach(source=>{
     const knowledge=state.channels.find(item=>item.channel===source.channel);
