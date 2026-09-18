@@ -321,6 +321,7 @@ $("#strategy-stop").onclick = async () => {
 function returnHome() {
   strategyRunning = false; hideCompletionResults();
   gameView.hidden = true; home.hidden = false; clearInterval(timer); timer = null;
+  localStorage.removeItem("arenaSession");
 }
 $("#back").onclick = returnHome;
 $("#completion-close").onclick = hideCompletionResults;
@@ -354,6 +355,16 @@ $("#channels-all").onclick = () => {
 };
 $("#channels-none").onclick = () => {
   channelSelection.clear();
+  renderChannels(); renderBatchSummary();
+  renderMap(svg, state, channelSelection, target, selectedChannel());
+};
+$("#channels-detected").onclick = () => {
+  channelSelection = new Set(state.channels.filter(item => item.status === "detected").map(item => item.channel));
+  renderChannels(); renderBatchSummary();
+  renderMap(svg, state, channelSelection, target, selectedChannel());
+};
+$("#channels-no-signal").onclick = () => {
+  channelSelection = new Set(state.channels.filter(item => item.status === "no_signal").map(item => item.channel));
   renderChannels(); renderBatchSummary();
   renderMap(svg, state, channelSelection, target, selectedChannel());
 };
